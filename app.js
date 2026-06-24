@@ -34,11 +34,17 @@ const {title, cuisine} = req.body  //The values we compare
 
 app.use(recipeMiddleWare);
 
-app.get("/api/recipes" ,(req, res)=>{
-    res.json(recipes)
+app.get("/api/recipes" ,(req, res,next)=>{
+    try {
+        res.json(recipes)
+    }
+    catch (err) {
+        next(err)
+    }
 })
 
-app.get('/api/recipes/:foodId', (req, res)=>{
+app.get('/api/recipes/:foodId', (req, res, next)=>{
+    try {
     const id = Number(req.params.foodId)
     let foodRec = null
     recipes.forEach((food)=>{
@@ -47,88 +53,114 @@ app.get('/api/recipes/:foodId', (req, res)=>{
         }
     })
     if(!foodRec){
-        return res.status(404).json({message: "Recipe not found"})
+        // return res.status(404).json({message: "Recipe not found"})
+        throw new Error("didnt work")  // <<<<<<<<<<<<<>>>>>>>>>>>>>>> testing error handling 
     }
     res.json(foodRec)
+    }
+    catch (err) {
+        next(err)
+    }
 })
 
-app.post('/api/recipes', cuisinTitleMidWar ,(req,res)=>{
-    const {title, cuisine, minutes, servings, vegetarian} = req.body //the pieces the user can manipulate
-    const newRecipe = { //skeleton of how the 'recipe' looks like
-        id : nextId,
-        title : title,
-        cuisine : cuisine,
-        minutes : minutes,
-        servings : servings,
-        vegetarian : vegetarian
-    }
-
-    nextId++ //we increase this so that the next 'recipe' has the next ID number
-
-    recipes.push(newRecipe) //putting the new recipe into the array of recipes
-
-    res.status(201).json({
-        done: "done",
-        newRecipe,
-        recipes
-    })
-
-})
-
-app.patch('/api/recipes/:foodId', (req, res)=>{
-    const id = Number(req.params.foodId)
-    const {title, cuisine, minutes, servings, vegetarian} = req.body
-
-    let foodRec = null
-    recipes.forEach((food)=>{
-        if (food.id === id) {
-            foodRec = food
-        }
-    })
-    if(!foodRec){
-        return res.status(404).json({message: "Recipe not found"})
-    }
-
-
-    recipes = recipes.map((food)=>{
-    
-        if(food.id === id){
-            return {...food, title: title, cuisine: cuisine, minutes: minutes, servings: servings, vegetarian: vegetarian }
+app.post('/api/recipes', cuisinTitleMidWar ,(req, res, next)=>{
+    try {
+        const {title, cuisine, minutes, servings, vegetarian} = req.body //the pieces the user can manipulate
+        const newRecipe = { //skeleton of how the 'recipe' looks like
+            id : nextId,
+            title : title,
+            cuisine : cuisine,
+            minutes : minutes,
+            servings : servings,
+            vegetarian : vegetarian
         }
 
-        return food
-    })
+        nextId++ //we increase this so that the next 'recipe' has the next ID number
 
-   res.json({
-    message : "Recipe Updated",
-    recipe : foodRec
-   })
+        recipes.push(newRecipe) //putting the new recipe into the array of recipes
 
+        res.status(201).json({
+            done: "done",
+            newRecipe,
+            recipes
+        })
+    }
+    catch (err) {
+        next(err)
+    }
 })
 
-app.delete('/api/recipes/:id', (req, res)=>{
-    const id = Number(req.params.id)
-    
-    let foodRec = null
-    recipes.forEach((food)=>{
-        if (food.id === id) {
-            foodRec = food
+app.patch('/api/recipes/:foodId', (req, res, next)=>{
+    try {
+        const id = Number(req.params.foodId)
+        const {title, cuisine, minutes, servings, vegetarian} = req.body
+
+        let foodRec = null
+        recipes.forEach((food)=>{
+            if (food.id === id) {
+                foodRec = food
+            }
+        })
+        if(!foodRec){
+            return res.status(404).json({message: "Recipe not found"})
         }
-    })
-    if(!foodRec){
-        return res.status(404).json({message: "Recipe not found"})
+
+
+        recipes = recipes.map((food)=>{
+        
+            if(food.id === id){
+                return {...food, title: title, cuisine: cuisine, minutes: minutes, servings: servings, vegetarian: vegetarian }
+            }
+
+            return food
+        })
+
+            res.json({
+                message : "Recipe Updated",
+                recipe : foodRec
+            })
+    }
+    catch (err) {
+        next(err)
     }
 
-
-
-    recipes = recipes.filter((food)=>{
-        return food.id !== id;
-    })
-
-    res.json({
-        delete: "well done",
-        recipes
-    })
 })
+
+app.delete('/api/recipes/:id', (req, res, next)=>{
+    try{
+            const id = Number(req.params.id)
+            
+            let foodRec = null
+            recipes.forEach((food)=>{
+                if (food.id === id) {
+                    foodRec = food
+                }
+            })
+            if(!foodRec){
+                return res.status(404).json({message: "Recipe not found"})
+            }
+
+
+
+            recipes = recipes.filter((food)=>{
+                return food.id !== id;
+            })
+
+            res.json({
+                delete: "well done",
+                recipes
+            })
+    }
+    catch (err) {
+        next(err)
+    }
+})
+
+function errorMiddleWare(err, req, res, next){
+    console.error(err);
+    res.sendStatus(500);
+}
+
+app.use(errorMiddleWare)
 
 app.listen(8080, () => { console.log("Server running on port 8080")})
