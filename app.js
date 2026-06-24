@@ -20,9 +20,21 @@ function recipeMiddleWare(req, res, next) {
     next();
 }
 
+function cuisinTitleMidWar(req, res, next) {
+console.log("validate function running")
+const {title, cuisine} = req.body  //The values we compare
+
+    if ( !title || !cuisine){  //checks to make sure both values have a value attatched if even 1 doesnt have a value in POST creation then return statement starts
+       return res.status(400).json({message: "Didnt work"});
+    }
+    else{
+        next();  //this runs when both title and cuisin have a value
+    }
+}
+
 app.use(recipeMiddleWare);
 
-app.get("/api/recipes",(req, res)=>{
+app.get("/api/recipes" ,(req, res)=>{
     res.json(recipes)
 })
 
@@ -40,7 +52,7 @@ app.get('/api/recipes/:foodId', (req, res)=>{
     res.json(foodRec)
 })
 
-app.post('/api/recipes',(req,res)=>{
+app.post('/api/recipes', cuisinTitleMidWar ,(req,res)=>{
     const {title, cuisine, minutes, servings, vegetarian} = req.body //the pieces the user can manipulate
     const newRecipe = { //skeleton of how the 'recipe' looks like
         id : nextId,
